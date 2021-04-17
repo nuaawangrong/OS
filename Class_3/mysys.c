@@ -2,7 +2,8 @@
 #include <unistd.h>
 #include <string.h>
 #include <malloc.h>
-
+#include <sys/types.h>
+#include <sys/wait.h>
 
 void mysys(char *command)
 {
