@@ -6,13 +6,12 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 
-void mysys(char *command)
+int commandSplit(char **argv,char *command)
 {
-	//实现该函数，该函数执行一条命令，并等待该命令执行结束
+
 	int i,j,s,e,cnt;
 	char *src = NULL;
-	char *argv[255];
-	
+
 	cnt = 0;
 	for(i = 0;i<255;i++) {
 		argv[i] = NULL;
@@ -37,8 +36,19 @@ void mysys(char *command)
 			s++;
 		}
 	}
+	return cnt;
+}
 
-	if(!strcmp(argv[0],"cd"))//cd命令在父进程中执行，调用chdir函数
+void mysys(char *command)
+{
+	//实现该函数，该函数执行一条命令，并等待该命令执行结束
+	char *argv[255] = {NULL};
+	int cnt = 0;//命令的个数
+
+	cnt = commandSplit(argv,command);
+	
+	//cd命令直接在父进程中执行，调用chdir函数
+	if(!strcmp(argv[0],"cd"))
 	{
 		int ret = chdir(argv[1]);
 		if(-1 == ret)
@@ -52,9 +62,9 @@ void mysys(char *command)
 
 
 	pid_t pid;
-	pid = fork();
+	pid = fork();//创建子进程
 	if(pid == 0) {
-		//创建子进程
+		//调用子进程	
 		int error;
 		error = execvp(argv[0], argv);
 	
@@ -63,10 +73,12 @@ void mysys(char *command)
 			perror("excel");
 		}
 
-
 	}
+
 	wait(NULL);
 
+	//释放字符数组指针
+	int i=0;
 	for(i=0;i<cnt;i++)
 	{
 		free(argv[i]);
@@ -74,15 +86,20 @@ void mysys(char *command)
 }
 
 int main()
+
 {
 	char order[255];
+
 	while(1)
 	{
 		printf("> ");
 		memset(order,0,255);
 		fgets(order,255,stdin);
-		order[strlen(order)-1] = 0;//去掉换行符
-		
+
+		//去掉换行符
+		order[strlen(order)-1] = 0;
+	
+		//退出命令单独处理	
 		if(!strcmp(order,"exit")) break;
 		
 		mysys(order);
