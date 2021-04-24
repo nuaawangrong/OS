@@ -70,7 +70,7 @@ void mysys(char *command)
 	
 		if(error < 0) 
 		{
-			perror("excel");
+			perror("execvp");
 		}
 
 	}
