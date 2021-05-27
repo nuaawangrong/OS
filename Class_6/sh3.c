@@ -20,8 +20,8 @@ struct command {
 };
 
 //全局变量
-char prePath[255] = "\0";//使用保存上一次的工作路径
-int command_count;//每一次的命令个数
+char prePath[255]="\0";//使用保存上一次的工作路径
+int command_count=0;//每一次的命令个数
 struct command commands[MAX_COMMANDS];//命令结构体数组
 
 //函数声明
@@ -68,9 +68,9 @@ void parse_commands(char *line)
 	str=strtok(line,"|");
 	while(str != NULL)
 	{
-		printf("str='%s'\n",str);
+		//printf("str='%s'\n",str);
 		parse_command(str, &commands[command_count]);
-		command_dump(commands[command_count]);
+		//command_dump(commands[command_count]);
 		command_count++;	
 		str=strtok(NULL, "|");
 	}
