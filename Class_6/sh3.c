@@ -75,8 +75,8 @@ void parse_commands(char *line)
 		str=strtok(NULL, "|");
 	}
 }
-//将重定向>符号分隔开
-void split1(char *src)
+//将重定向符号'>'和'<'分隔开
+void splitRedirectSign(char *src)
 {
 	char *temp = (char *)malloc(sizeof(char)*255);
 	memset(temp,0,sizeof(temp));
@@ -91,19 +91,19 @@ void split1(char *src)
 			i--;
 			continue;
 		}
-		if(src[i]=='>') flag=1;
+		if(src[i]=='>' || src[i]=='<') flag=1;
 		temp[j]=src[i];
 	}
 	memset(src,0,strlen(src));
 	strcpy(src,temp);
 }
-//查看是否有重定向输出符号
-int findRedirectSign(char **argv)
+//查看是否有重定向输入或输出符号
+int findRedirectSign(char **argv, char *sign)
 {
 	int i;
 	for(i=0;argv[i];i++)
 	{
-		if(!strcmp(argv[i],">")) return i;
+		if(!strcmp(argv[i],sign)) return i;
 	}
 	return -1;
 }
@@ -165,13 +165,29 @@ void showArgv(char **argv)
 
 void exec_simple(struct command command)
 {
-	//先判断是否存在重定向输入符号
-	int ret = findRedirectSign(command.argv);
+	int ret;
+	//判断是否存在重定向输出符号
+	ret = findRedirectSign(command.argv,">");
 	if(ret != -1)
 	{
 		//如果存在,打开重定向输出的文件,并更新文件描述符
 		int fd=open(command.argv[ret+1],O_CREAT|O_RDWR,0666);
 		dup2(fd,1);
+		close(fd);
+		//将后面多余的参数去掉
+		int i=ret;
+		for(;command.argv[i];i++)
+		{
+			command.argv[i]=NULL;
+		}	
+	}
+	//判断是否存在重定向输入符号
+	ret = findRedirectSign(command.argv,"<");
+	if(ret != -1)
+	{
+		//如果存在,打开重定向输入的文件,并更新文件描述符
+		int fd=open(command.argv[ret+1],O_CREAT|O_RDWR,0666);
+		dup2(fd,0);
 		close(fd);
 		//将后面多余的参数去掉
 		int i=ret;
@@ -214,7 +230,7 @@ void exec_pipe()
 
 void mysys(char *command)
 {
-	split1(command);
+	splitRedirectSign(command);
 	parse_commands(command);	
 	//cd命令直接在父进程中执行，调用chdir函数
 	if(!strcmp(commands[0].argv[0],"cd"))
